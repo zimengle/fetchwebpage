@@ -16,6 +16,7 @@ function getFilePath(contentType,url){
 	var suffix = filename.substring(filename.lastIndexOf("."));
 	
 	var filepath = ({
+		".ogg":"ogg/",
 		".json":"data/",
 		".plist":"data/",
 		".mp3":"mp3/",
@@ -39,7 +40,8 @@ function getFilePath(contentType,url){
 	return "/"+filepath+filename;
 }
 
-module.exports = function(har, output,callback) {
+module.exports = function(har, output,callback,replace) {
+	replace = replace || true;
 	var index = 0;
 	var fetchUrl = har['log']['entries'][0]['request']['url'];
 	var urlPath = fetchUrl.substring(0,fetchUrl.lastIndexOf("/"));
@@ -53,20 +55,22 @@ module.exports = function(har, output,callback) {
 		var url = request.url.replace(/\?.*/g, "");
 		var contentType = response['content']['mimeType'];
 		var filepath;
-		/*
-		if(url.indexOf(urlPath) !== -1){
-					filepath = url.replace(urlPath, "");
-					
-				}else{*/
-		
+		if(replace){
 			filepath = getFilePath(contentType,url);
-		//}
+		}else{
+			if(url.indexOf(urlPath) !== -1){
+				filepath = url.replace(urlPath, "");
+			}
+		}
+		
+		if(!filepath){
+			return;
+		}
 		if(filepath == "/" && contentType =="text/html"){
 			filepath = "/index.html"
 		}
 		
 		var outpath = output + filepath;
-		console.info(outpath);
 		mkdirp.sync(outpath.substring(0, outpath.lastIndexOf("/")));
 		request.headers.forEach(function(h) {
 			if (['Last-Modified', 'ETag', 'Expires', 'Cache-Control'].indexOf(h['name']) !== -1) {

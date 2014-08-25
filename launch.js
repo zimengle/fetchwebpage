@@ -2,7 +2,8 @@ var args = {
 	url : "",
 	har : "",
 	delay : 5,
-	output : "./output/" + new Date().getTime()
+	output : "./output/" + new Date().getTime(),
+	replace : true
 }
 process.argv.forEach(function(val, index, array) {
 	var pair = val.split("=");
@@ -15,9 +16,10 @@ var __analyze = require("./analyze.js");
 var __fs = require('fs');
 var __replace = require('./replace.js');
 if (args.har != null) {
+	
 	analyze(__fs.readFileSync(args.har, {
 		"encoding" : "utf8"
-	}));
+	}),args.replace);
 } else {
 	var exec = require('child_process').exec;
 	exec('phantomjs ./lib/netsniff.js ' + args.url + ' ' + args.delay, function(error, stdout, stderr) {
@@ -45,7 +47,7 @@ function end() {
 
 var _har;
 
-function analyze(har) {
+function analyze(har,_replace) {
 	har = JSON.parse(har);
 	_har = har;
 	var entries = har['log']['entries'];
@@ -54,7 +56,7 @@ function analyze(har) {
 			removeItem(entries, entry);
 		}
 	});
-	__analyze(har, args.output, replace);
+	__analyze(har, args.output, replace,_replace);
 }
 
 function replace(diffList) {
